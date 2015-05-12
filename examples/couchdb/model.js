@@ -1,19 +1,18 @@
 var model = module.exports,
   util = require('util'),
-  redis = require('redis');
-
-var db = redis.createClient();
+  couchdbConfig = require('./couchdb.json'),
+  nano = require('nano')(couchdbConfig.users_url);
 
 var keys = {
-  token: 'tokens:%s',
-  client: 'clients:%s',
-  refreshToken: 'refresh_tokens:%s',
-  grantTypes: 'clients:%s:grant_types',
+  token: 'tokens&key="%s"',
+  client: 'clients&key="%s"',
+  refreshToken: 'refresh_tokens&key="%s"',
+  grantTypes: 'clients&key="%s":grant_types',
   user: 'users:%s'
 };
 
-model.getAccessToken = function (bearerToken, callback) {
-  db.hgetall(util.format(keys.token, bearerToken), function (err, token) {
+model.getAccessToken = function(bearerToken, callback) {
+  nano.view(util.format(keys.token, bearerToken), function(err, token) {
     if (err) return callback(err);
 
     if (!token) return callback();
@@ -27,8 +26,8 @@ model.getAccessToken = function (bearerToken, callback) {
   });
 };
 
-model.getClient = function (clientId, clientSecret, callback) {
-  db.hgetall(util.format(keys.client, clientId), function (err, client) {
+model.getClient = function(clientId, clientSecret, callback) {
+  nano.view(util.format(keys.client, clientId), function(err, client) {
     if (err) return callback(err);
 
     if (!client || client.clientSecret !== clientSecret) return callback();
@@ -40,8 +39,8 @@ model.getClient = function (clientId, clientSecret, callback) {
   });
 };
 
-model.getRefreshToken = function (bearerToken, callback) {
-  db.hgetall(util.format(keys.refreshToken, bearerToken), function (err, token) {
+model.getRefreshToken = function(bearerToken, callback) {
+  nano.view(util.format(keys.refreshToken, bearerToken), function(err, token) {
     if (err) return callback(err);
 
     if (!token) return callback();
@@ -55,30 +54,38 @@ model.getRefreshToken = function (bearerToken, callback) {
   });
 };
 
-model.grantTypeAllowed = function (clientId, grantType, callback) {
-  db.sismember(util.format(keys.grantTypes, clientId), grantType, callback);
+model.grantTypeAllowed = function(clientId, grantType, callback) {
+  nano.sismember(util.format(keys.grantTypes, clientId), grantType, callback);
 };
 
-model.saveAccessToken = function (accessToken, clientId, expires, user, callback) {
-  db.hmset(util.format(keys.token, accessToken), {
-    accessToken: accessToken,
-    clientId: clientId,
-    expires: expires ? expires.toISOString() : null,
-    userId: user.id
-  }, callback);
+model.saveAccessToken = function(accessToken, clientId, expires, user, callback) {
+  console.log("What is this", accessToken, clientId, expires, util.inspect(user));
+  nano.insert({
+      _id: accessToken,
+      accessToken: accessToken,
+      clientId: clientId,
+      expires: expires ? expires.toISOString() : null,
+      userId: user.id
+    },
+    accessToken,
+    callback);
 };
 
-model.saveRefreshToken = function (refreshToken, clientId, expires, user, callback) {
-  db.hmset(util.format(keys.refreshToken, refreshToken), {
-    refreshToken: refreshToken,
-    clientId: clientId,
-    expires: expires ? expires.toISOString() : null,
-    userId: user.id
-  }, callback);
+model.saveRefreshToken = function(refreshToken, clientId, expires, user, callback) {
+  console.log("What is this", refreshToken, clientId, expires, util.inspect(user));
+  nano.insert({
+      _id: refreshToken,
+      refreshToken: refreshToken,
+      clientId: clientId,
+      expires: expires ? expires.toISOString() : null,
+      userId: user.id
+    },
+    refreshToken,
+    callback);
 };
 
-model.getUser = function (username, password, callback) {
-  db.hgetall(util.format(keys.user, username), function (err, user) {
+model.getUser = function(username, password, callback) {
+  nano.view(util.format(keys.user, username), function(err, user) {
     if (err) return callback(err);
 
     if (!user || password !== user.password) return callback();
