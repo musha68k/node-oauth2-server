@@ -19,7 +19,7 @@ var express = require('express'),
   request = require('supertest'),
   should = require('should');
 
-var oauth2server = require('../');
+var oauth2server = require('./../../');
 
 var bootstrap = function (oauthConfig) {
   if (oauthConfig === 'mockValid') {
@@ -35,8 +35,12 @@ var bootstrap = function (oauthConfig) {
     };
   }
 
-  var app = express();
-  app.oauth = oauth2server(oauthConfig || { model: {} });
+
+  var app = require('./../postgresql/index').app;
+  app.oauth = oauth2server(oauthConfig || {
+    model: app.oauth.model
+  });
+  // app.oauth = oauth2server(oauthConfig || { model: {} });
 
   app.use(bodyParser());
   app.all('/', app.oauth.authorise());
