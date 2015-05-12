@@ -1,0 +1,6 @@
+{
+	"users_url": "http://admin:none@localhost:5984/anoauthusersdb",
+	"oauth_access_tokens_url": "http://admin:none@localhost:5984/anoauthaccesstokensdb",
+	"oauth_clients_url": "http://admin:none@localhost:5984/anoauthclientsdb",
+	"oauth_refresh_tokens_url": "http://admin:none@localhost:5984/anoauthrefreshtokensdb"
+}
