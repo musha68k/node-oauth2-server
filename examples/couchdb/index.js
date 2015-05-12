@@ -17,7 +17,7 @@ app.oauth = oauthserver({
 // Handle token grant requests
 app.all('/oauth/token', app.oauth.grant());
 
-app.get('/secret', app.oauth.authorise(), function (req, res) {
+app.get('/private/page', app.oauth.authorise(), function (req, res) {
   // Will require a valid access_token
   res.send('Secret area');
 });
